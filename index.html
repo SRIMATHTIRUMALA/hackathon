@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMart Smart Shopping Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        /* MAIN LAYOUT: full height, right side scrolls inside */
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 0;
+            height: calc(100vh - 200px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 2px solid #e9ecef;
+            overflow-y: auto;
+        }
+
+        .chat-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        /* scrollable area (messages + products) */
+        .chat-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        .chat-messages {
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: #f8f9fa;
+            color: #212529;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 25px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* products also live inside scroll area */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 0 20px 20px 20px;
+            margin-top: 5px;
+        }
+
+        .product-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .product-card h4 {
+            color: #212529;
+            margin-bottom: 8px;
+            font-size: 16px;
+            min-height: 40px;
+        }
+
+        .product-brand {
+            color: #6c757d;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .current-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .original-price {
+            font-size: 16px;
+            color: #6c757d;
+            text-decoration: line-through;
+        }
+
+        .discount-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .product-location {
+            background: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #1976d2;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .health-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .health-tag {
+            background: #d4edda;
+            color: #155724;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .stock-status {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .stock-status.in-stock {
+            color: #28a745;
+        }
+
+        .stock-status.out-of-stock {
+            color: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 15px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .quick-action-btn {
+            padding: 12px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .quick-action-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .budget-input {
+            margin-bottom: 20px;
+        }
+
+        .budget-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .budget-input input, .budget-input select, .budget-input textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .budget-input input:focus,
+        .budget-input select:focus,
+        .budget-input textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .quick-filters {
+            margin-top: 20px;
+        }
+
+        .quick-filters h3 {
+            margin-bottom: 12px;
+            color: #495057;
+            font-size: 16px;
+        }
+
+        .filter-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+            }
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .mba-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s;
+}
+
+.mba-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 DMart Smart Shopping Assistant</h1>
+            <p>AI-Powered Budget Shopping with 15,000+ Products</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                 <div class="budget-input">
+    <label>📂 Upload Product CSV</label>
+    <input type="file" id="productCsv" accept=".csv">
+
+    <!-- Submit / Upload button here -->
+    <button type="button"
+            class="send-btn"
+            style="margin-top:10px; width:100%;"
+            onclick="uploadProducts()">
+        Upload & Load Products
+    </button>
+</div>
+
+                <div class="budget-input">
+                    <label>💰 Your Budget (₹)</label>
+                    <input type="number" id="budget" placeholder="Enter your budget" value="1000">
+                </div>
+
+                <div class="budget-input">
+                    <label>🎯 Shopping Goal</label>
+                    <select id="goal">
+                        <option value="">Select goal...</option>
+                        <option value="healthy">Healthy Living</option>
+                        <option value="weight-loss">Weight Loss</option>
+                        <option value="muscle-gain">Muscle Gain</option>
+                        <option value="diabetic">Diabetic Friendly</option>
+                        <option value="family">Family Essentials</option>
+                        <option value="quick-meal">Quick Meals</option>
+                    </select>
+                </div>
+
+                <div class="budget-input">
+                    <label>📝 Special Requirements</label>
+                    <textarea id="requirements" rows="3" placeholder="E.g., I want to make chicken biryani, need organic vegetables..."></textarea>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="quickSearch('breakfast')">🍳 Breakfast</button>
+                    <button class="quick-action-btn" onclick="quickSearch('vegetables')">🥗 Vegetables</button>
+                    <button class="quick-action-btn" onclick="quickSearch('dairy')">🥛 Dairy</button>
+                    <button class="quick-action-btn" onclick="quickSearch('snacks')">🍪 Snacks</button>
+                </div>
+
+                <div class="quick-filters">
+                    <h3>Health Filters</h3>
+                    <div class="filter-btn" onclick="toggleFilter('organic')">Organic</div>
+                    <div class="filter-btn" onclick="toggleFilter('low-fat')">Low Fat</div>
+                    <div class="filter-btn" onclick="toggleFilter('protein')">High Protein</div>
+                    <div class="filter-btn" onclick="toggleFilter('sugar-free')">Sugar Free</div>
+                </div>
+            </div>
+
+            <div class="chat-section">
+                <div class="chat-scroll">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message assistant">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                <strong>Welcome to DMart Smart Shopping! 🛒</strong><br><br>
+                                I'm here to help you shop smart within your budget. Tell me:
+                                <ul style="margin-top: 10px; padding-left: 20px;">
+                                    <li>What you want to cook or buy</li>
+                                    <li>Your budget and health goals</li>
+                                    <li>Any dietary preferences</li>
+                                </ul>
+                                <br>I'll find the best products with exact prices, rack locations, and healthier alternatives! 🎯
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-grid" id="productGrid" style="display: none;"></div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" class="chat-input"
+                               placeholder="Ask me anything! E.g., 'I want to make chicken biryani within ₹500'"
+                               onkeypress="handleKeyPress(event)">
+                        <button class="send-btn" onclick="sendMessage()" id="sendBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let sessionId = 'session_' + Date.now();
+        let activeFilters = [];
+
+        function addMessage(content, isUser = false) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🤖';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const typing = document.createElement('div');
+            typing.className = 'message assistant';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typing);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function displayProducts(products) {
+            const grid = document.getElementById('productGrid');
+            grid.style.display = 'grid';
+            grid.innerHTML = '';
+
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="loading">No products found</div>';
+                return;
+            }
+
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                const healthTags = product.health_tags && product.health_tags.length > 0
+                    ? `<div class="health-tags">${product.health_tags.map(tag => 
+                        `<span class="health-tag">${tag}</span>`).join('')}</div>`
+                    : '';
+
+                const discount = product.discount_percent > 0
+                    ? `<span class="discount-badge">${product.discount_percent}% OFF</span>`
+                    : '';
+
+                card.innerHTML = `
+                    <h4>${product.name}</h4>
+                    <div class="product-brand">${product.brand}</div>
+                    <div class="product-price">
+                        <span class="current-price">₹${product.price}</span>
+                        ${product.mrp !== product.price ? `<span class="original-price">₹${product.mrp}</span>` : ''}
+                        ${discount}
+                    </div>
+                    <div class="product-location">📍 ${product.rack_location}</div>
+                    ${healthTags}
+                    <div class="stock-status ${product.in_stock ? 'in-stock' : 'out-of-stock'}">
+                        ${product.in_stock ? '✅ In Stock' : '❌ Out of Stock'}
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const budget = document.getElementById('budget').value;
+            const sendBtn = document.getElementById('sendBtn');
+            
+            addMessage(message, true);
+            input.value = '';
+            sendBtn.disabled = true;
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId,
+                        budget: budget ? parseFloat(budget) : null
+                    })
+                });
+
+                const data = await response.json();
+                hideTypingIndicator();
+
+                if (data.success) {
+                    addMessage(data.response);
+                    if (data.products && data.products.length > 0) {
+                        displayProducts(data.products);
+                    }
+                } else {
+                    addMessage('Sorry, I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('Connection error. Please check if the server is running.');
+                console.error('Error:', error);
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function quickSearch(query) {
+            document.getElementById('chatInput').value = `Show me ${query} items within my budget`;
+            sendMessage();
+        }
+
+        function toggleFilter(filter) {
+            const btn = event.target;
+            btn.classList.toggle('active');
+            
+            if (activeFilters.includes(filter)) {
+                activeFilters = activeFilters.filter(f => f !== filter);
+            } else {
+                activeFilters.push(filter);
+            }
+        }
+
+        console.log('DMart Smart Shopping Assistant Ready! 🛒');
+        async function uploadProducts() {
+    const fileInput = document.getElementById('productCsv');
+    const file = fileInput.files[0];
+    if (!file) {
+        alert('Please choose a CSV file first.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const resp = await fetch(`${API_BASE}/upload_products`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await resp.json();
+        if (data.success) {
+            alert(`Products loaded: ${data.count}`);
+        } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error uploading CSV. Check if server is running.');
+    }
+}
+function displayProducts(products) {
+    const grid = document.getElementById('productGrid');
+    grid.style.display = 'grid';
+    grid.innerHTML = '';
+
+    if (products.length === 0) {
+        grid.innerHTML = '<div class="loading">No products found</div>';
+        return;
+    }
+
+    products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        
+        const healthTags = product.health_tags && product.health_tags.length > 0
+            ? `<div class="health-tags">${product.health_tags.map(tag => 
+                `<span class="health-tag">${tag}</span>`).join('')}</div>`
+            : '';
+
+        const discount = product.discount_percent > 0
+            ? `<span class="discount-badge">${product.discount_percent}% OFF</span>`
+            : '';
+
+        card.innerHTML = `
+            <h4>${product.name}</h4>
+            <div class="product-brand">${product.brand}</div>
+            <div class="product-price">
+                <span class="current-price">₹${product.price}</span>
+                ${product.mrp !== product.price ? `<span class="original-price">₹${product.mrp}</span>` : ''}
+                ${discount}
+            </div>
+            <div class="product-location">📍 ${product.rack_location}</div>
+            ${healthTags}
+            <div class="stock-status ${product.in_stock ? 'in-stock' : 'out-of-stock'}">
+                ${product.in_stock ? '✅ In Stock' : '❌ Out of Stock'}
+            </div>
+            <button class="mba-btn" onclick="showMBA(${product.id})">
+                🛍️ Frequently Bought Together
+            </button>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+async function showMBA(productId) {
+    try {
+        const resp = await fetch(`${API_BASE}/mba-recommendations`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ product_ids: [productId] })
+        });
+
+        const data = await resp.json();
+        
+        if (data.success && data.recommendations.length > 0) {
+            let message = "🛍️ <strong>Customers who bought this also purchased:</strong><br><br>";
+            data.recommendations.forEach((p, i) => {
+                message += `${i + 1}. ${p.name} by ${p.brand}<br>`;
+                message += `   ₹${p.price} at ${p.rack_location}<br>`;
+                message += `   <em>(${Math.round(p.confidence * 100)}% buy together)</em><br><br>`;
+            });
+            addMessage(message);
+        } else {
+            addMessage("No frequent purchase patterns found for this item yet.");
+        }
+    } catch (err) {
+        console.error(err);
+        addMessage("Could not load recommendations.");
+    }
+}
+
+
+    </script>
+</body>
+</html>
